@@ -60,18 +60,22 @@ export async function GET(
 }
 
 export async function DELETE(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    await deleteById(params.id);
-  } catch (error) {
-    return {
-      message: "delete failed",
-      error,
-    };
+    req: Request,
+    { params }: { params: { id: string } }
+  ) {
+    try {
+      await deleteById(params.id); // Logika penghapusan di sini
+  
+      // Return sukses response
+      return NextResponse.json({ message: 'Delete successful' });
+    } catch (error) {
+      // Return error response
+      return NextResponse.json(
+        { message: 'Delete failed', error },
+        { status: 500 }
+      );
+    }
   }
-}
 
 export async function PUT(
   req: Request,
