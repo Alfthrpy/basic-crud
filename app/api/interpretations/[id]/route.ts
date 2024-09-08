@@ -65,7 +65,6 @@ export async function DELETE(
 ) {
   try {
     await deleteById(params.id);
-    return NextResponse.json({ message: "delete successfully" });
   } catch (error) {
     return {
       message: "delete failed",
