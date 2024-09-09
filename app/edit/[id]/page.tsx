@@ -12,7 +12,8 @@ import { useRouter } from "next/navigation"
 
 export default function EditPage() {
   const [data,setData] = useState({term : '',interpretation:''})
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loadingScreen, setLoadingScreen] = useState<boolean>(false);
+  const [loadingButton, setLoadingButton] = useState<boolean>(false);
   const [error_term,setErrorTerm] = useState<String |null>(null)
   const [error_inter,setErrorInter] = useState<String |null>(null)
   const params = useParams()
@@ -30,7 +31,7 @@ export default function EditPage() {
 
 const submitData = async (e:React.FormEvent)=>{
   e.preventDefault();
-  setLoading(true)
+  setLoadingButton(true)
 
   if(!data.term) setErrorTerm('Istilah Wajib Diisi!')
   
@@ -59,7 +60,7 @@ const submitData = async (e:React.FormEvent)=>{
   } catch (error : any) {
       console.log(error)
   } finally {
-    setLoading(false)
+    setLoadingButton(false)
   }
 }
   
@@ -72,17 +73,18 @@ const submitData = async (e:React.FormEvent)=>{
     if (id) {
       const fetchData = async () => {
         try {
+          setLoadingScreen(true)
           const response = await fetch(`/api/interpretations/${id}`);
           if (!response.ok) {
             throw new Error('Failed to fetch data');
           }
           const result= await response.json();
 
-          setData({term: result[0].term, interpretation: result[0].interpretation});
+          setData({term: result.term, interpretation: result.interpretation});
         } catch (error) {
           console.error(error);
         } finally {
-          setLoading(false);
+          setLoadingScreen(false);
         }
       };
 
@@ -90,7 +92,7 @@ const submitData = async (e:React.FormEvent)=>{
     }
   }, [params]);
 
-  if (loading) {
+  if (loadingScreen) {
     return <SkeletonCard/>
   }
 
@@ -121,8 +123,37 @@ const submitData = async (e:React.FormEvent)=>{
           onChange={handleChange}
         ></textarea>
         {error_inter && <p>{error_inter}</p>}
-        <button className="bg-black text-white mt-5 px-4 py-1 rounded-md cursor-pointer">
-          Perbarui Istilah
+        <button
+          className="bg-black text-white mt-5 px-4 py-1 rounded-md cursor-pointer flex items-center justify-center"
+          type="submit"
+          disabled={loadingButton}
+        >
+          {loadingButton ? (
+            <>
+              <svg
+                className="w-5 h-5 mr-2 text-white animate-spin"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8H4z"
+                ></path>
+              </svg>
+            </>
+          ) : (
+            "Edit Istilah"
+          )}
         </button>
       </form>
     </div>

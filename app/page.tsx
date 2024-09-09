@@ -44,7 +44,8 @@ export default function Home() {
         method: "DELETE",
       });
       setDatas((prevDatas) => prevDatas?.filter((i) => i.id !== id));
-      toast.success("Data Berhasil Dihapus!");
+      const data = await response.json();
+      toast.success(`${data.message}`);
     } catch (error) {
       setError("Failed to delete, please try again");
     } finally {
@@ -56,13 +57,14 @@ export default function Home() {
   return (
     <div>
       {error && <p className="py-4 text-red-500">{error}</p>}
-
+      
       {loading ? (
         Array.from({ length: 10 }).map((_, index) => (
           <SkeletonCard key={index} />
         ))
       ) : datas?.length > 0 ? (
         <div>
+          
           {datas?.map((datas) => (
             <div
               className="p-4 my-2 rounded-md border-b leading-9"

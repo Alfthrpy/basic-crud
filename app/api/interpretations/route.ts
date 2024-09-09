@@ -1,10 +1,11 @@
-import { sql } from "@vercel/postgres";
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 import { NextResponse } from "next/server";
 
 async function fetchInterpretations() {
   try {
-    const data = await sql`SELECT * FROM datas`;
-    return data.rows;
+    const data = await prisma.datas.findMany(); // Mengambil semua data dari tabel `datas`
+    return data;
   } catch (error) {
     console.error("Error fetching data:", error);
     throw new Error("Failed to fetch interpretations");
@@ -16,10 +17,15 @@ async function createInterpretation(data: {
   interpretation: string;
 }) {
   try {
-    await sql`INSERT INTO datas (term, interpretation) VALUES (${data.term}, ${data.interpretation})`;
+    await prisma.datas.create({
+      data: {
+        term: data.term,
+        interpretation: data.interpretation,
+      },
+    });
     return { success: true, message: "Interpretation created successfully" };
   } catch (error: any) {
-    if (error.code === '23505') { // Duplicate key error
+    if (error.code === 'P2002') { // Prisma duplicate key error
       console.error("Duplicate entry detected for term:", data.term);
       return { success: false, message: `Interpretation for term '${data.term}' already exists` };
     }

@@ -1,49 +1,61 @@
 import { sql } from "@vercel/postgres";
 import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+const prisma = new PrismaClient();
 
 async function fetchById(id: string) {
   try {
-    const data = await sql`SELECT * FROM datas where id = ${id}`;
+    const data =await prisma.datas.findUnique({
+      where: { id }, // Menentukan id sebagai parameter query
+    });
     return data;
   } catch (error) {
-    console.error("failed to fetch data id:", id, error);
+    console.error("failed to fetch data", error);
     throw new Error("failed to fetch data");
   }
 }
+
 
 async function editById(
   id: string,
   data: { term: string; interpretation: string }
 ) {
   try {
-    await sql`
-            UPDATE datas
-            SET term = ${data.term}, interpretation = ${data.interpretation}
-            WHERE id = ${id}
-        `;
-    return { success: true, message: "Interpretation created successfully" };
-  } catch (error: any) {
-    if (error.code === "23505") {
-      // Duplicate key error
-      console.error("Duplicate entry detected for term:", data.term);
-      return {
-        success: false,
-        message: `Interpretation for term '${data.term}' already exists`,
-      };
+    await prisma.datas.update({
+      where:{id},
+      data: {
+        term: data.term,
+        interpretation: data.interpretation
+      }
+    })
+    return { success: true, message: "Interpretation updated successfully" };
+  } catch (error : any) {
+    if (error.code === 'P2025') { // Error jika tidak ditemukan
+      console.error("No interpretation found for the given ID:", id);
+      return { success: false, message: "Interpretation not found" };
     }
-    console.error("Error creating interpretation:", error);
-    throw new Error("Failed to create interpretation");
+    console.error("Error updating interpretation:", error);
+    throw new Error("Failed to update interpretation");
   }
 }
 
+// async function deleteById(id: string) {
+//   try {
+//     await sql`DELETE FROM datas WHERE id = ${id}`;
+//   } catch (error) {
+//     return {
+//       message: "failed to delete data",
+//       error,
+//     };
+//   }
+// }
+
 async function deleteById(id: string) {
   try {
-    await sql`DELETE FROM datas WHERE id = ${id}`;
-  } catch (error) {
-    return {
-      message: "failed to delete data",
-      error,
-    };
+    await prisma.datas.delete({where:{id}})
+  } catch (error:any) {
+    console.error("Error deleting data:", error);
+    throw new Error("Failed to delete data")
   }
 }
 
@@ -53,29 +65,30 @@ export async function GET(
 ) {
   try {
     const response = await fetchById(params.id);
-    return NextResponse.json(response.rows);
+    console.log(response);
+    return NextResponse.json(response);
   } catch (error) {
     console.log(error);
   }
 }
 
 export async function DELETE(
-    req: Request,
-    { params }: { params: { id: string } }
-  ) {
-    try {
-      await deleteById(params.id); // Logika penghapusan di sini
-  
-      // Return sukses response
-      return NextResponse.json({ message: 'Delete successful' });
-    } catch (error) {
-      // Return error response
-      return NextResponse.json(
-        { message: 'Delete failed', error },
-        { status: 500 }
-      );
-    }
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await deleteById(params.id); // Logika penghapusan di sini
+
+    // Return sukses response
+    return NextResponse.json({ message: "Delete successful" });
+  } catch (error) {
+    // Return error response
+    return NextResponse.json(
+      { message: "Delete failed", error },
+      { status: 500 }
+    );
   }
+}
 
 export async function PUT(
   req: Request,
