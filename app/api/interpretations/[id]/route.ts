@@ -39,16 +39,6 @@ async function editById(
   }
 }
 
-// async function deleteById(id: string) {
-//   try {
-//     await sql`DELETE FROM datas WHERE id = ${id}`;
-//   } catch (error) {
-//     return {
-//       message: "failed to delete data",
-//       error,
-//     };
-//   }
-// }
 
 async function deleteById(id: string) {
   try {

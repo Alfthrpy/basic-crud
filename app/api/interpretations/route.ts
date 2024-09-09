@@ -65,14 +65,30 @@ export async function POST(req: Request) {
 }
 
 // GET handler: Fetch all interpretations
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get('page') || '1');
+  const limit = parseInt(searchParams.get('limit') || '10');
+  const offset = (page - 1) * limit;
+
   try {
-    const interpretations = await fetchInterpretations();
-    return NextResponse.json(interpretations, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || "Failed to get interpretations" },
-      { status: 500 }
-    );
+    const interpretations = await prisma.datas.findMany({
+      skip: offset,
+      take: limit,
+    });
+
+    const totalItems = await prisma.datas.count();
+    const totalPages = Math.ceil(totalItems / limit);
+
+    return NextResponse.json({
+      data: interpretations,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+      },
+    });
+  } catch (error) {
+    return NextResponse.json({ message: 'Failed to fetch data' }, { status: 500 });
   }
 }
